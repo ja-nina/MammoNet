@@ -1,7 +1,7 @@
 # MammoNet
 
 ## Description
-Deep Learning for Breast Histology Classification
+Deep Learning for Breast Histology Classification 🩺
 
 ## Installation
 
@@ -10,7 +10,7 @@ Deep Learning for Breast Histology Classification
 1. Create the conda environment:
 
 ```bash
-conda env create -f [environment.yml](http://_vscodecontentref_/3) -n mammonet_env
+conda env create -f [environment.yml](environmant.yaml) -n mammonet_env
 
 conda activate mammonet_env
 

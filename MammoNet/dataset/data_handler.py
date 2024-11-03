@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from MammoNet.dataset.dataset import HistologyDataset
 from MammoNet.global_variables import CLASSES, PATH_TO_DATASET
 from MammoNet.utils import get_cancer_type_from_path, get_resolutions_from_path
+from collections import Counter
 
 class DataHandler:
     def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES):
@@ -30,10 +31,10 @@ class DataHandler:
                 for file in files:
                     if file.endswith('.png'):
                         normalized_path = os.path.normpath(os.path.join(root, file))
-                        file_paths.append(os.path.join(root, file))
+                        file_paths.append(normalized_path)
                         labels.append(class_name)
-                        sublabels.append(get_cancer_type_from_path(root))
-                        resolutions.append(get_resolutions_from_path(root))
+                        sublabels.append(get_cancer_type_from_path(normalized_path))
+                        resolutions.append(get_resolutions_from_path(normalized_path))
 
         return file_paths, labels, sublabels, resolutions
 
@@ -44,10 +45,10 @@ class DataHandler:
         combined_labels = list(zip(labels, sublabels, resolutions))
 
         train_files, temp_files, train_combined_labels, temp_combined_labels = train_test_split(
-            file_paths, combined_labels, test_size=0.4, stratify=combined_labels
+            file_paths, combined_labels, test_size=0.7, stratify=combined_labels, random_state=42
         )
         val_files, test_files, val_combined_labels, test_combined_labels = train_test_split(
-            temp_files, temp_combined_labels, test_size=0.5, stratify=temp_combined_labels
+            temp_files, temp_combined_labels, test_size=0.33, stratify=temp_combined_labels, random_state=42
         )
         
         train_labels, _, _ = zip(*train_combined_labels)
@@ -74,14 +75,29 @@ class DataHandler:
             'valid': val_dataset
         })
 
-    def create_data_loaders(self, train_dataset, val_dataset, test_dataset):
+    def create_data_loaders(self, train_dataset, val_dataset, test_dataset, batch_size=32):
         """
         Create data loaders for training, validation, and testing datasets.
         """
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
         return train_loader, val_loader, test_loader
     
-data_handler = DataHandler()
-file_paths, labels, sublabels, resolutions = data_handler.read_full_dataset()
+    def get_dataset_loaders(self):
+        """
+        Get dataset loaders for training, validation, and testing datasets.
+        """
+        file_paths, labels, sublabels, resolutions = self.read_full_dataset()
+        train_files, val_files, test_files, train_labels, val_labels, test_labels = self.create_stratified_datasets(file_paths, labels, sublabels, resolutions)
+        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels, test_labels)
+        train_loader, val_loader, test_loader = self.create_data_loaders(datasets['train'], datasets['valid'], datasets['test'])
+        
+        return train_loader, val_loader, test_loader
+    
+
+if __name__ == '__main__':
+    
+    # naive test
+    data_handler = DataHandler()
+    data_handler.get_dataset_loaders()

@@ -7,3 +7,5 @@ SUBCLASSES_MALIGNANT = ['ductal_carcinoma', 'lobular_carcinoma', 'mucinous_carci
 ZOOM = ['40, 100', '200', '400']
 
 PATH_TO_DATASET = '../data/BreaKHis_v1/histology_slides/breast'
+
+RESULTS_DIR = '/trained_models'
