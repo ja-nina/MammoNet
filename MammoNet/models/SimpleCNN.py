@@ -93,7 +93,7 @@ class SimpleCNN:
         return running_loss / len(val_loader), accuracy
         
 
-    def train(self, train_loader, val_loader, test_loader):
+    def train(self, train_loader, val_loader, test_loader, random_seed=42):
         
         best_val_loss = torch.inf
         for epoch in range(self.epochs):
@@ -119,9 +119,6 @@ class SimpleCNN:
             # apply early stopping criterion
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-            else:
-                print(f"Epoch [{epoch+1}/{self.epochs}], "
-                f"Early stopping criterion met. Saving model at: {best_val_loss}")
                 torch.save(self.model.state_dict(), 
                            os.path.join(self.results_dir, "mammonet_cnn.pth"))
                 

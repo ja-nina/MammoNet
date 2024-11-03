@@ -38,17 +38,17 @@ class DataHandler:
 
         return file_paths, labels, sublabels, resolutions
 
-    def create_stratified_datasets(self, file_paths, labels, sublabels, resolutions):
+    def create_stratified_datasets(self, file_paths, labels, sublabels, resolutions, random_seed=42):
         """
         Create stratified datasets for training, validation, and testing.
         """
         combined_labels = list(zip(labels, sublabels, resolutions))
 
         train_files, temp_files, train_combined_labels, temp_combined_labels = train_test_split(
-            file_paths, combined_labels, test_size=0.7, stratify=combined_labels, random_state=42
+            file_paths, combined_labels, test_size=0.7, stratify=combined_labels, random_state=random_seed
         )
         val_files, test_files, val_combined_labels, test_combined_labels = train_test_split(
-            temp_files, temp_combined_labels, test_size=0.33, stratify=temp_combined_labels, random_state=42
+            temp_files, temp_combined_labels, test_size=0.33, stratify=temp_combined_labels, random_state=random_seed
         )
         
         train_labels, _, _ = zip(*train_combined_labels)
@@ -84,13 +84,13 @@ class DataHandler:
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
         return train_loader, val_loader, test_loader
     
-    def get_dataset_loaders(self):
+    def get_dataset_loaders(self, random_seed=42):
         """
         Get dataset loaders for training, validation, and testing datasets.
         """
         file_paths, labels, sublabels, resolutions = self.read_full_dataset()
         train_files, val_files, test_files, train_labels, val_labels, test_labels = self.create_stratified_datasets(file_paths, labels, sublabels, resolutions)
-        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels, test_labels)
+        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels, test_labels, random_seed = random_seed)
         train_loader, val_loader, test_loader = self.create_data_loaders(datasets['train'], datasets['valid'], datasets['test'])
         
         return train_loader, val_loader, test_loader
