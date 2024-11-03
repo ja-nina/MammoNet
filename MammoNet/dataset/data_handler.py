@@ -1,12 +1,15 @@
 import os
+import numpy as np
+from tqdm import tqdm
+from PIL import Image
 from datasets import DatasetDict
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
 from MammoNet.dataset.dataset import HistologyDataset
-from MammoNet.global_variables import CLASSES, PATH_TO_DATASET
+from MammoNet.global_variables import CLASSES, PATH_TO_DATASET, AUGMENTATION_DIR
 from MammoNet.utils import get_cancer_type_from_path, get_resolutions_from_path
-from collections import Counter
+from MammoNet.dataset.image_augmentations import ImgAugTransform
 
 class DataHandler:
     def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES):
@@ -56,11 +59,45 @@ class DataHandler:
         test_labels,  _, _  = zip(*test_combined_labels)
         
         return train_files, val_files, test_files, train_labels, val_labels, test_labels
+    
+    def generate_augmented_images(self, input_images_paths, input_labels, output_dir, num_copies = 1):
+        '''
+        Generate augmented images for the input images.
+        '''
+        augmented_images = []
+        augmented_labels = []
+        
+        for label, input_image_path in tqdm(zip(input_labels, input_images_paths), total=len(input_labels), desc="Augmenting images"):
+            img = Image.open(input_image_path)
+            img_array = np.array(img)
+                
+            os.makedirs(output_dir, exist_ok=True)
+                
+            augmenter = ImgAugTransform()
+            
+            for i in range(num_copies):
+                augmented_image = augmenter(img_array)  # Apply augmentations
+                augmented_img_pil = Image.fromarray(augmented_image)
+                    
+                output_path = os.path.join(output_dir, f"augmented_{i}.png")
+                
+                augmented_img_pil.save(output_path)
+                
+                augmented_images.append(output_path)
+                augmented_labels.append(label)
+                
+        return augmented_images, augmented_labels
 
-    def create_datasets_with_augmentation(self, train_files, val_files, test_files, train_labels, val_labels, test_labels):
+    def create_datasets_with_augmentation(self, train_files, val_files, test_files, train_labels, val_labels, test_labels, augment = True):
         """
         Create datasets with augmentation for training, validation, and testing.
         """
+        
+        if augment:
+            augmented_files, augmented_labels = self.generate_augmented_images(train_files, train_labels, output_dir = AUGMENTATION_DIR, num_copies=2)
+            train_files = train_files + augmented_files
+            train_labels = tuple(list(train_labels) + augmented_labels)
+        
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -84,13 +121,13 @@ class DataHandler:
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
         return train_loader, val_loader, test_loader
     
-    def get_dataset_loaders(self, random_seed=42):
+    def get_dataset_loaders(self, random_seed=42, augment = True):
         """
         Get dataset loaders for training, validation, and testing datasets.
         """
         file_paths, labels, sublabels, resolutions = self.read_full_dataset()
         train_files, val_files, test_files, train_labels, val_labels, test_labels = self.create_stratified_datasets(file_paths, labels, sublabels, resolutions, random_seed=random_seed)    
-        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels, test_labels)
+        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels, test_labels, augment=augment)
         train_loader, val_loader, test_loader = self.create_data_loaders(datasets['train'], datasets['valid'], datasets['test'])
         
         return train_loader, val_loader, test_loader
