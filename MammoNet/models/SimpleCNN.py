@@ -3,13 +3,16 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
+import wandb
 from MammoNet.global_variables import RESULTS_DIR
 from MammoNet.dataset.data_handler import DataHandler # for tests
+from MammoNet.utils import create_results_dir, setup_wandb
 
 
 class SimpleCNNModel(nn.Module):
     def __init__(self, num_classes, input_size=224):
         super(SimpleCNNModel, self).__init__()
+        self.name = "SimpleCNNModel"
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
@@ -46,16 +49,16 @@ class SimpleCNN:
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
         
         self.results_dir = RESULTS_DIR
-        self.epochs = 5 
+        self.epochs = 10
         
-        # TODO: Add config file
-
+        create_results_dir(self.results_dir)
+        setup_wandb("mammonet_project", {"model": "SimpleCNN", "epochs": self.epochs})
 
     def train_epoch(self, train_loader):
 
         self.model.to(self.device)
         running_loss = 0.0
-        for images, labels in tqdm(train_loader, desc="Training Batch", leave=False):
+        for images, labels in tqdm(train_loader, desc="Training Batch"):
             images, labels = images.to(self.device), labels.to(self.device)
 
             self.optimizer.zero_grad()
@@ -92,9 +95,8 @@ class SimpleCNN:
 
     def train(self, train_loader, val_loader, test_loader):
         
-        # TODO: introduce wadb.ai and do early stopping
         best_val_loss = torch.inf
-        for epoch in tqdm(range(self.epochs), desc="Training Epochs"):
+        for epoch in range(self.epochs):
             train_loss = self.train_epoch(train_loader)
             val_loss, val_accuracy = self.validate(val_loader)
             test_loss, test_accuracy  = self.validate(test_loader)
@@ -104,6 +106,15 @@ class SimpleCNN:
                 f"Val Accuracy: {val_accuracy:.4f},"
                 f"Test Loss: {test_loss:.4f}, "
                 f"Test Accuracy: {test_accuracy:.4f}")
+            
+            wandb.log({
+                "epoch": epoch + 1,
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "val_accuracy": val_accuracy,
+                "test_loss": test_loss,
+                "test_accuracy": test_accuracy
+            })
             
             # apply early stopping criterion
             if val_loss < best_val_loss:
