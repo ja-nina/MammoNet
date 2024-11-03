@@ -1,7 +1,7 @@
-# MammoNet
+# MammoNet 🩺
 
 ## Description
-Deep Learning for Breast Histology Classification 🩺
+Deep Learning for Breast Histology Classification 
 
 ## Installation
 
