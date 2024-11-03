@@ -1,4 +1,7 @@
 import os
+import random
+import numpy as np
+import torch
 import wandb
 from MammoNet.global_variables import WANDB_PROJECT
 
@@ -36,3 +39,12 @@ def setup_wandb(project_name, config_params):
         config[key] = value
 
     print("wandb setup complete!")
+    
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False

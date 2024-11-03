@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 import wandb
-from MammoNet.global_variables import RESULTS_DIR
+from MammoNet.global_variables import RESULTS_DIR, SEED
 from MammoNet.dataset.data_handler import DataHandler # for tests
-from MammoNet.utils import create_results_dir, setup_wandb
+from MammoNet.utils import create_results_dir, setup_wandb, set_seed
 
 
 class SimpleCNNModel(nn.Module):
@@ -53,6 +53,7 @@ class SimpleCNN:
         
         create_results_dir(self.results_dir)
         setup_wandb("mammonet_project", {"model": "SimpleCNN", "epochs": self.epochs})
+        set_seed(SEED)
 
     def train_epoch(self, train_loader):
 
@@ -92,7 +93,6 @@ class SimpleCNN:
         accuracy = correct / len(val_loader.dataset)
         return running_loss / len(val_loader), accuracy
         
-
     def train(self, train_loader, val_loader, test_loader, random_seed=42):
         
         best_val_loss = torch.inf
@@ -121,6 +121,7 @@ class SimpleCNN:
                 best_val_loss = val_loss
                 torch.save(self.model.state_dict(), 
                            os.path.join(self.results_dir, "mammonet_cnn.pth"))
+                
                 
 if __name__ == '__main__':
     
