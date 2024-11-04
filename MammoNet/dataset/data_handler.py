@@ -8,16 +8,25 @@ from torchvision import transforms
 from sklearn.model_selection import train_test_split
 from MammoNet.dataset.dataset import HistologyDataset
 from MammoNet.global_variables import CLASSES, PATH_TO_DATASET, AUGMENTATION_DIR
-from MammoNet.utils import get_cancer_type_from_path, get_resolutions_from_path
-from MammoNet.dataset.image_augmentations import ImgAugTransform
+from MammoNet.utils import get_cancer_type_from_path, get_resolutions_from_path, get_label_from_augmented_image_path
+from MammoNet.dataset.image_augmentations import ImageAugmentations
 
 class DataHandler:
-    def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES):
+    def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES, augment=True, reuse_augmentation=True):
         """
         Initialize the DataHandler with the dataset path and classes.
+        Reuse augmentation only if random seed is not changed.
         """
         self.classes = classes
         self.data_path = data_path
+        
+        # configure augmentation
+        self.augment = augment
+        self.reuse_augmentation = reuse_augmentation
+        self.augmentation_dir =  AUGMENTATION_DIR
+        self.num_copies = 1
+        
+        os.makedirs(self.augmentation_dir, exist_ok=True)
         
     def read_full_dataset(self):
         """
@@ -30,7 +39,7 @@ class DataHandler:
         
         for class_name in self.classes:
             class_path = os.path.join(self.data_path, class_name)
-            for root, dirs, files in os.walk(class_path):
+            for root, _, files in os.walk(class_path):
                 for file in files:
                     if file.endswith('.png'):
                         normalized_path = os.path.normpath(os.path.join(root, file))
@@ -60,31 +69,37 @@ class DataHandler:
         
         return train_files, val_files, test_files, train_labels, val_labels, test_labels
     
-    def generate_augmented_images(self, input_images_paths, input_labels, output_dir, num_copies = 1):
+    def generate_augmented_images(self, input_images_paths, input_labels, num_copies = 1):
         '''
         Generate augmented images for the input images.
         '''
         augmented_images = []
         augmented_labels = []
         
-        for label, input_image_path in tqdm(zip(input_labels, input_images_paths), total=len(input_labels), desc="Augmenting images"):
-            img = Image.open(input_image_path)
-            img_array = np.array(img)
-                
-            os.makedirs(output_dir, exist_ok=True)
-                
-            augmenter = ImgAugTransform()
+        if self.augment:
+            if self.reuse_augmentation is False:
+                for idx, (label, input_image_path) in tqdm(enumerate(zip(input_labels, input_images_paths)), total=len(input_labels), desc="Augmenting images"):
+                    img = Image.open(input_image_path)
+                    img_array = np.array(img)
             
-            for i in range(num_copies):
-                augmented_image = augmenter(img_array)  # Apply augmentations
-                augmented_img_pil = Image.fromarray(augmented_image)
+                    augmenter = ImageAugmentations()
                     
-                output_path = os.path.join(output_dir, f"augmented_{i}.png")
-                
-                augmented_img_pil.save(output_path)
-                
-                augmented_images.append(output_path)
-                augmented_labels.append(label)
+                    for i in range(num_copies):
+                        augmented_image = augmenter(img_array)  # Apply augmentations
+                        augmented_img_pil = augmented_image
+                            
+                        output_path = os.path.join(self.augmentation_dir, f"augmented_{idx}_{label}.png")
+                        
+                        augmented_img_pil.save(output_path)
+                        
+                        augmented_images.append(output_path)
+                        augmented_labels.append(label)
+            else:
+                augmented_images = [os.path.join(self.augmentation_dir, file) 
+                                    for file in os.listdir(self.augmentation_dir) 
+                                    if file.endswith('.png')]
+                augmented_labels = [get_label_from_augmented_image_path(file) 
+                                    for file in augmented_images]
                 
         return augmented_images, augmented_labels
 
@@ -93,10 +108,9 @@ class DataHandler:
         Create datasets with augmentation for training, validation, and testing.
         """
         
-        if augment:
-            augmented_files, augmented_labels = self.generate_augmented_images(train_files, train_labels, output_dir = AUGMENTATION_DIR, num_copies=2)
-            train_files = train_files + augmented_files
-            train_labels = tuple(list(train_labels) + augmented_labels)
+        augmented_files, augmented_labels = self.generate_augmented_images(train_files, train_labels)
+        train_files = train_files + augmented_files
+        train_labels = tuple(list(train_labels) + augmented_labels)
         
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -134,7 +148,5 @@ class DataHandler:
     
 
 if __name__ == '__main__':
-    
-    # naive test
-    data_handler = DataHandler()
+    data_handler = DataHandler(augment=True, reuse_augmentation=False)
     data_handler.get_dataset_loaders()

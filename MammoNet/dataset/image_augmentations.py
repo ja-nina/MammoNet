@@ -1,104 +1,55 @@
-# import numpy as np
-# from imgaug import augmenters as iaa
-# from PIL import Image
-
-# class ImgAugTransform:
-#     '''
-#     Transformations taken from: https://www.kaggle.com/code/CVxTz/cnn-starter-nasnet-mobile-0-9709-lb
-#     '''
-#     def __init__(self):
-#         self.aug = iaa.Sequential(
-#             [
-#                 iaa.Fliplr(0.5),
-#                 iaa.Flipud(0.2),
-#                 iaa.Sometimes(0.5, iaa.Affine(
-#                     scale={"x": (0.9, 1.1), "y": (0.9, 1.1)},
-#                     translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
-#                     rotate=(-10, 10),
-#                     shear=(-5, 5),
-#                     order=1,  # Changed to a single integer
-#                     cval=(0, 255),  # Changed to a tuple of two integers
-#                     mode='constant'  # Changed to a string
-#                 )),
-#                 iaa.SomeOf((0, 5),
-#                     [
-#                         iaa.Sometimes(0.5, iaa.Superpixels(p_replace=(0, 1.0), n_segments=(20, 200))),
-#                         iaa.OneOf([
-#                             iaa.GaussianBlur((0, 1.0)),
-#                             iaa.AverageBlur(k=(3, 5)),
-#                             iaa.MedianBlur(k=(3, 5)),
-#                         ]),
-#                         iaa.Sharpen(alpha=(0, 1.0), lightness=(0.9, 1.1)),
-#                         iaa.Emboss(alpha=(0, 1.0), strength=(0, 2.0)),
-#                         iaa.SimplexNoiseAlpha(iaa.OneOf([
-#                             iaa.EdgeDetect(alpha=(0.5, 1.0)),
-#                             iaa.DirectedEdgeDetect(alpha=(0.5, 1.0), direction=(0.0, 1.0)),
-#                         ])),
-#                         iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.01*255), per_channel=0.5),
-#                         iaa.OneOf([
-#                             iaa.Dropout((0.01, 0.05), per_channel=0.5),
-#                             iaa.CoarseDropout((0.01, 0.03), size_percent=(0.01, 0.02), per_channel=0.2),
-#                         ]),
-#                         iaa.Invert(0.01, per_channel=True),
-#                         iaa.Add((-2, 2), per_channel=0.5),
-#                         iaa.AddToHueAndSaturation((-1, 1)),
-#                         iaa.OneOf([
-#                             iaa.Multiply((0.9, 1.1), per_channel=0.5),
-#                             iaa.FrequencyNoiseAlpha(
-#                                 exponent=(-1, 0),
-#                                 first=iaa.Multiply((0.9, 1.1), per_channel=True),
-#                                 second=iaa.ContrastNormalization((0.9, 1.1))
-#                             )
-#                         ]),
-#                         iaa.Sometimes(0.5, iaa.ElasticTransformation(alpha=(0.5, 3.5), sigma=0.25)),
-#                         iaa.Sometimes(0.5, iaa.PiecewiseAffine(scale=(0.01, 0.05))),
-#                         iaa.Sometimes(0.5, iaa.PerspectiveTransform(scale=(0.01, 0.1)))
-#                     ],
-#                     random_order=True
-#                 )
-#             ],
-#             random_order=True
-#         )
-
-#     def __call__(self, img):
-#         img = np.array(img)
-#         img = self.aug(image=img)
-#         return Image.fromarray(img)
-
 import numpy as np
-from imgaug import augmenters as iaa
+import albumentations as A
+import cv2
 from PIL import Image
-import os 
 
-
-class ImgAugTransform:
+class ImageAugmentations:
     '''
-    Transformations taken from: https://www.kaggle.com/code/CVxTz/cnn-starter-nasnet-mobile-0-9709-lb
+    Transformations inspired by: https://www.kaggle.com/code/CVxTz/cnn-starter-nasnet-mobile-0-9709-lb
     '''
     def __init__(self):
-        self.aug = iaa.Sequential(
+        self.aug = A.Compose(
             [
-                iaa.Fliplr(0.5),
-                iaa.Flipud(0.2),
-                iaa.Sometimes(0.5, iaa.Affine(
-                    scale={"x": (0.9, 1.1), "y": (0.9, 1.1)},
-                    translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
-                    rotate=(-10, 10),
-                    shear=(-5, 5),
-                    order=1, 
-                    cval=(0, 255),
-                    mode='constant'  
-                ))
+                A.HorizontalFlip(p=0.5),
+                A.VerticalFlip(p=0.2),
+                A.OneOf([
+                    A.Affine(
+                        scale=(0.9, 1.1),
+                        mode=1,
+                        cval=(0, 255),
+                        # decided against rotation, because of resulting mask
+                    ),
+                    A.SafeRotate(
+                        p = 1,
+                        limit = (-20, 20),
+                        rotate_method = 'ellipse',
+                        interpolation = cv2.INTER_AREA,
+                    ),
+                ], p=0.7),
+                A.SomeOf([
+                    A.Superpixels(p_replace=(0, 0.6), n_segments=(20, 200), p=0.5),
+                    A.OneOf([
+                        A.GaussianBlur(blur_limit=(1, 3.0), p=1.0),
+                        A.MedianBlur(blur_limit=3, p=1.0),
+                        A.MotionBlur(blur_limit=3, p=1.0),
+                    ], p=1.0),
+                    A.Sharpen( p=1.0),
+                    A.Emboss(p=1.0),
+                    A.InvertImg(p=0.01),
+                    A.RandomBrightnessContrast(brightness_limit=(-0.2, 0.2), contrast_limit=(-0.2, 0.2), p=1.0),
+                    A.HueSaturationValue(hue_shift_limit=(-1, 1), sat_shift_limit=(-1, 1), val_shift_limit=(-1, 1), p=1.0),
+                    A.OneOf([
+                        A.MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=True, p=1.0),
+                        A.RandomBrightnessContrast(brightness_limit=(-0.2, 0.2), contrast_limit=(-0.2, 0.2), p=1.0)
+                    ], p=1.0),
+                    A.ElasticTransform(alpha=1, sigma=50, p=0.5),
+                    A.Perspective(scale=(0.01, 0.1), p=0.5, keep_size=False)
+                ], n=5, p=1.0)
             ],
-            random_order=True
+            p=1.0
         )
 
     def __call__(self, img):
         img = np.array(img)
-        img = self.aug(image=img)
-        augmented_image = np.clip(img, 0, 255).astype(np.uint8)
-        return img
-    
-
-            
-        
+        augmented = self.aug(image=img)
+        return Image.fromarray(augmented['image'])
