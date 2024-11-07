@@ -40,6 +40,9 @@ def setup_wandb(project_name, config_params):
 
     print("wandb setup complete!")
     
+def get_label_from_augmented_image_path(path):
+    return path.split('_')[-1].replace('.png', '')
+    
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)

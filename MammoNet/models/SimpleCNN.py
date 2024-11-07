@@ -129,6 +129,3 @@ if __name__ == '__main__':
         train_loader, val_loader, test_loader = data_handler.get_dataset_loaders()
         model = SimpleCNN()
         model.train(train_loader, val_loader, test_loader)
-
-
-
