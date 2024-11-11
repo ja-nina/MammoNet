@@ -4,7 +4,7 @@ setup(
     name='MammoNet',
     version='0.1.0',
     description='Deep Learning for Breast Histology Classification',
-    author='Nina Zukowska',
+    author='Nina Zukowska, Enise Irem Colak',
     author_email='your.email@example.com',
     url='https://github.com/yourusername/mammonet',  # TODO: replace with link to github
     packages=find_packages(),
@@ -25,3 +25,4 @@ setup(
     ],
     python_requires='>=3.8',
 )
+
