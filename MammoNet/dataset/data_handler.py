@@ -12,10 +12,11 @@ from MammoNet.utils import get_cancer_type_from_path, get_resolutions_from_path,
 from MammoNet.dataset.image_augmentations import ImageAugmentations
 
 class DataHandler:
-    def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES, augment=True, reuse_augmentation=True):
+    def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES, augment=True, reuse_augmentation=True, num_workers = 4, batch_size = 32):
         """
         Initialize the DataHandler with the dataset path and classes.
         Reuse augmentation only if random seed is not changed.
+        # TODO: Config for data handler.
         """
 
         self.classes = classes
@@ -26,6 +27,8 @@ class DataHandler:
         self.reuse_augmentation = reuse_augmentation
         self.augmentation_dir =  AUGMENTATION_DIR
         self.num_copies = 1
+        self.num_workers = num_workers
+        self.batch_size = batch_size
         
         os.makedirs(self.augmentation_dir, exist_ok=True)
         
@@ -117,6 +120,7 @@ class DataHandler:
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
         ])
+        
         train_dataset = HistologyDataset(train_files, train_labels, transform=transform)
         val_dataset = HistologyDataset(val_files, val_labels, transform=transform)
         test_dataset = HistologyDataset(test_files, test_labels, transform=transform)
@@ -127,13 +131,13 @@ class DataHandler:
             'valid': val_dataset
         })
 
-    def create_data_loaders(self, train_dataset, val_dataset, test_dataset, batch_size=32):
+    def create_data_loaders(self, train_dataset, val_dataset, test_dataset):
         """
         Create data loaders for training, validation, and testing datasets.
         """
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+        test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
         return train_loader, val_loader, test_loader
     
     def get_dataset_loaders(self, random_seed=42, augment = True):
