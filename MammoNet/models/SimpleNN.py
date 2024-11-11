@@ -5,45 +5,41 @@ import torch.optim as optim
 from tqdm import tqdm
 import wandb
 from MammoNet.global_variables import RESULTS_DIR, SEED
-from MammoNet.dataset.data_handler import DataHandler # for tests
+from MammoNet.dataset.data_handler import DataHandler  # for tests
 from MammoNet.utils import create_results_dir, setup_wandb, set_seed
 
 
-class SimpleCNNModel(nn.Module):
+class SimpleNNModel(nn.Module):
     def __init__(self, num_classes, input_size=224):
-        super(SimpleCNNModel, self).__init__()
-        self.name = "SimpleCNNModel"
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
+        super(SimpleNNModel, self).__init__()
+        self.name = "SimpleNNModel"
+        
+        # Calculate the flattened input dimension assuming a 3-channel image of input_size x input_size
+        flattened_dim = 3 * input_size * input_size
+
+        # Define the fully connected layers
+        self.fc1 = nn.Linear(flattened_dim, 512)
+        self.fc2 = nn.Linear(512, 128)
+        self.fc3 = nn.Linear(128, num_classes)
+        
+        # Define activation function and dropout
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.25)
-        
-        # Calculate the flattened dimension dynamically
-        example_input = torch.zeros(1, 3, input_size, input_size)
-        example_output = self._forward_conv(example_input)
-        flattened_dim = example_output.view(-1).shape[0]
-        
-        # Define the fully connected layers
-        self.fc1 = nn.Linear(flattened_dim, 128)
-        self.fc2 = nn.Linear(128, num_classes)
-
-    def _forward_conv(self, x):
-        x = self.pool(self.relu(self.conv1(x)))
-        x = self.pool(self.relu(self.conv2(x)))
-        return x
 
     def forward(self, x):
-        x = self._forward_conv(x)
+        # Flatten the input
         x = x.view(x.size(0), -1)
+        
+        # Pass through fully connected layers with ReLU activation and dropout
         x = self.dropout(self.relu(self.fc1(x)))
-        x = self.fc2(x)
+        x = self.dropout(self.relu(self.fc2(x)))
+        x = self.fc3(x)
         return x
 
 
-class SimpleCNN:
-    def __init__(self, num_classes = 2, input_size=224):
-        self.model = SimpleCNNModel(num_classes, input_size)
+class SimpleNN:
+    def __init__(self, num_classes=2, input_size=224):
+        self.model = SimpleNNModel(num_classes, input_size)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
@@ -52,11 +48,10 @@ class SimpleCNN:
         self.epochs = 10
         
         create_results_dir(self.results_dir)
-        setup_wandb("mammonet_project", {"model": "SimpleCNN", "epochs": self.epochs})
+        setup_wandb("mammonet_project", {"model": "SimpleNN", "epochs": self.epochs})
         set_seed(SEED)
 
     def train_epoch(self, train_loader):
-
         self.model.to(self.device)
         running_loss = 0.0
         for images, labels in tqdm(train_loader, desc="Training Batch"):
@@ -101,11 +96,11 @@ class SimpleCNN:
             val_loss, val_accuracy = self.validate(val_loader)
             test_loss, test_accuracy  = self.validate(test_loader)
             print(f"Epoch [{epoch+1}/{self.epochs}], "
-                f"Train Loss: {train_loss:.4f}, "
-                f"Val Loss: {val_loss:.4f}, "
-                f"Val Accuracy: {val_accuracy:.4f},"
-                f"Test Loss: {test_loss:.4f}, "
-                f"Test Accuracy: {test_accuracy:.4f}")
+                  f"Train Loss: {train_loss:.4f}, "
+                  f"Val Loss: {val_loss:.4f}, "
+                  f"Val Accuracy: {val_accuracy:.4f}, "
+                  f"Test Loss: {test_loss:.4f}, "
+                  f"Test Accuracy: {test_accuracy:.4f}")
             
             wandb.log({
                 "epoch": epoch + 1,
@@ -116,16 +111,15 @@ class SimpleCNN:
                 "test_accuracy": test_accuracy
             })
             
-            # apply early stopping criterion
+            # Apply early stopping criterion
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 torch.save(self.model.state_dict(), 
                            os.path.join(self.results_dir,  f"{self.model.name}.pth"))
                 
-                
+
 if __name__ == '__main__':
-    
-        data_handler = DataHandler()
-        train_loader, val_loader, test_loader = data_handler.get_dataset_loaders()
-        model = SimpleCNN()
-        model.train(train_loader, val_loader, test_loader)
+    data_handler = DataHandler()
+    train_loader, val_loader, test_loader = data_handler.get_dataset_loaders()
+    model = SimpleNN()
+    model.train(train_loader, val_loader, test_loader)
