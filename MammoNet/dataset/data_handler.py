@@ -17,7 +17,7 @@ class DataHandler:
         Initialize the DataHandler with the dataset path and classes.
         Reuse augmentation only if random seed is not changed.
         """
-        print(data_path)
+
         self.classes = classes
         self.data_path = data_path
         

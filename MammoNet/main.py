@@ -7,6 +7,7 @@ if __name__ == "__main__":
     data_handler = DataHandler()
     train_loader, val_loader, test_loader = data_handler.get_dataset_loaders()
 
+
     # SimpleCNN model training
     print("Starting training for SimpleCNN...")
     simple_cnn = SimpleCNN(num_classes=2)
