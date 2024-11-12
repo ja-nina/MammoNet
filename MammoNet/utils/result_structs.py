@@ -31,6 +31,7 @@ class Metrics(BaseModel):
     f1_score: float
     confusion_matrix: NdArray
     classification_report: str
+    auc_score: float
 
 class ResultsConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

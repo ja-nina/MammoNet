@@ -18,7 +18,8 @@ class Evaluator:
             "recall": lambda y_true, y_pred: metrics.recall_score(y_true, y_pred, average='weighted'),
             "f1_score": lambda y_true, y_pred: metrics.f1_score(y_true, y_pred, average='weighted'),
             "confusion_matrix": metrics.confusion_matrix,
-            "classification_report": metrics.classification_report
+            "classification_report": metrics.classification_report,
+            "auc_score": lambda y_true, y_pred: metrics.roc_auc_score(y_true, y_pred, average='weighted')
         }
 
 
