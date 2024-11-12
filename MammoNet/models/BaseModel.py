@@ -56,33 +56,37 @@ class BaseModel:
     def train(self, train_loader, val_loader, test_loader):
         # init wandb
         setup_wandb("mammonet_project", {"model": self.model_name, "epochs": self.epochs})
-        
+
         best_val_loss = float("inf")
         for epoch in range(self.epochs):
             train_loss = self.train_epoch(train_loader)
             val_loss, val_accuracy = self.validate(val_loader)
             test_loss, test_accuracy = self.validate(test_loader)
-            print(f"Epoch [{epoch + 1}/{self.epochs}], "
-                  f"Train Loss: {train_loss:.4f}, "
-                  f"Val Loss: {val_loss:.4f}, "
-                  f"Val Accuracy: {val_accuracy:.4f}, "
-                  f"Test Loss: {test_loss:.4f}, "
-                  f"Test Accuracy: {test_accuracy:.4f}")
+            print(
+                f"Epoch [{epoch + 1}/{self.epochs}], "
+                f"Train Loss: {train_loss:.4f}, "
+                f"Val Loss: {val_loss:.4f}, "
+                f"Val Accuracy: {val_accuracy:.4f}, "
+                f"Test Loss: {test_loss:.4f}, "
+                f"Test Accuracy: {test_accuracy:.4f}"
+            )
 
-            wandb.log({
-                "epoch": epoch + 1,
-                "train_loss": train_loss,
-                "val_loss": val_loss,
-                "val_accuracy": val_accuracy,
-                "test_loss": test_loss,
-                "test_accuracy": test_accuracy
-            })
+            wandb.log(
+                {
+                    "epoch": epoch + 1,
+                    "train_loss": train_loss,
+                    "val_loss": val_loss,
+                    "val_accuracy": val_accuracy,
+                    "test_loss": test_loss,
+                    "test_accuracy": test_accuracy,
+                }
+            )
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                torch.save(self.model.state_dict(), os.path.join(self.results_dir, f"{self.model.name}.pth"))         
+                torch.save(self.model.state_dict(), os.path.join(self.results_dir, f"{self.model.name}.pth"))
         wandb.finish()
-                
+
     def load_model(self, model_path, device):
         self.model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
         self.model.eval()

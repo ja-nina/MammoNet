@@ -5,11 +5,14 @@ import torch
 import wandb
 from MammoNet.utils.global_variables import WANDB_PROJECT
 
+
 def get_cancer_type_from_path(path):
     return path.split(os.sep)[-4]
 
+
 def get_resolutions_from_path(path):
     return path.split(os.sep)[-2]
+
 
 def create_results_dir(results_dir):
     """
@@ -20,6 +23,7 @@ def create_results_dir(results_dir):
     """
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
+
 
 def setup_wandb(project_name, config_params):
     """
@@ -38,10 +42,12 @@ def setup_wandb(project_name, config_params):
         config[key] = value
 
     print("wandb setup complete!")
-    
+
+
 def get_label_from_augmented_image_path(path):
-    return path.split('_')[-1].replace('.png', '')
-    
+    return path.split("_")[-1].replace(".png", "")
+
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -50,5 +56,3 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    
-    

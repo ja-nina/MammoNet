@@ -4,6 +4,10 @@ from MammoNet.models.BaseModel import BaseModel
 
 
 class SimpleCNNModel(nn.Module):
+    """
+    Simple CNN model class
+    """
+
     def __init__(self, num_classes, input_size=224):
         super(SimpleCNNModel, self).__init__()
         self.name = "SimpleCNNModel"
@@ -36,6 +40,10 @@ class SimpleCNNModel(nn.Module):
 
 
 class SimpleCNN(BaseModel):
+    """
+    SimpleCNN model class wrapper
+    """
+
     def __init__(self, num_classes=2, input_size=224):
         model = SimpleCNNModel(num_classes, input_size)
         super().__init__(model, num_classes, "SimpleCNN", lr=0.001, epochs=10)
