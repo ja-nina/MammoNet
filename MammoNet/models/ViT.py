@@ -7,8 +7,12 @@ class VisionTransformerModel(nn.Module):
     def __init__(self, num_classes, model_name="google/vit-base-patch16-224-in21k"):
         super(VisionTransformerModel, self).__init__()
         self.name = "VisionTransformerModel"
-        self.processor = ViTImageProcessor.from_pretrained(model_name)
+        self.processor = ViTImageProcessor.from_pretrained(model_name, do_rescale=False)
         self.model = ViTForImageClassification.from_pretrained(model_name, num_labels=num_classes)
+        
+        # freeze backbone
+        for param in self.model.vit.parameters():
+            param.requires_grad = False
 
     def forward(self, images):
         inputs = self.processor(images=images, return_tensors="pt")
