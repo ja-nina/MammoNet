@@ -14,17 +14,15 @@ from MammoNet.dataset.image_augmentations import ImageAugmentations
 
 
 class DataHandler:
-    def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES, augment=True, reuse_augmentation=True, num_workers=4,
-                 batch_size=32):
+    def __init__(self, data_path=PATH_TO_DATASET, classes=CLASSES, augment=True, reuse_augmentation=True, num_workers=4, batch_size=32):
         """
         Initialize the DataHandler with the dataset path and classes.
         Reuse augmentation only if random seed is not changed.
-        # TODO: Config for data handler.
         """
         self.classes = classes
         self.data_path = data_path
 
-        # configure augmentation
+        # Configure augmentation
         self.augment = augment
         self.reuse_augmentation = reuse_augmentation
         self.augmentation_dir = AUGMENTATION_DIR
@@ -84,8 +82,7 @@ class DataHandler:
 
         if self.augment:
             if not self.reuse_augmentation:
-                for idx, (label, input_image_path) in tqdm(enumerate(zip(input_labels, input_images_paths)),
-                                                           total=len(input_labels), desc="Augmenting images"):
+                for idx, (label, input_image_path) in tqdm(enumerate(zip(input_labels, input_images_paths)), total=len(input_labels), desc="Augmenting images"):
                     img = Image.open(input_image_path)
                     img_array = np.array(img)
 
@@ -110,15 +107,13 @@ class DataHandler:
 
         return augmented_images, augmented_labels
 
-    def create_datasets_with_augmentation(self, train_files, val_files, test_files, train_labels, val_labels,
-                                          test_labels):
+    def create_datasets_with_augmentation(self, train_files, val_files, test_files, train_labels, val_labels, test_labels):
         """
-        Create datasets with augmentation for training, validation, and testing.
+        Create datasets with or without augmentation for training, validation, and testing.
         """
-        if self.augment:
-            augmented_files, augmented_labels = self.generate_augmented_images(train_files, train_labels)
-            train_files = train_files + augmented_files
-            train_labels = tuple(list(train_labels) + augmented_labels)
+        augmented_files, augmented_labels = self.generate_augmented_images(train_files, train_labels)
+        train_files = train_files + augmented_files
+        train_labels = tuple(list(train_labels) + augmented_labels)
 
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -155,12 +150,11 @@ class DataHandler:
         train_files, val_files, test_files, train_labels, val_labels, test_labels = self.create_stratified_datasets(
             file_paths, labels, sublabels, resolutions, random_seed=random_seed
         )
-        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels,
-                                                          test_labels)
-        train_loader, val_loader, test_loader = self.create_data_loaders(datasets['train'], datasets['valid'],
-                                                                         datasets['test'])
+        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels, test_labels)
+        train_loader, val_loader, test_loader = self.create_data_loaders(datasets['train'], datasets['valid'], datasets['test'])
 
         return train_loader, val_loader, test_loader
+
 
 
 if __name__ == '__main__':
