@@ -1,8 +1,8 @@
-
 from torch.utils.data import Dataset
 from PIL import Image
 
-from MammoNet.global_variables import CLASSES
+
+from MammoNet.utils.global_variables import CLASSES
 class HistologyDataset(Dataset):
     def __init__(self, file_paths, labels, transform=None):
         self.file_paths = file_paths
