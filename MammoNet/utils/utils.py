@@ -3,8 +3,7 @@ import random
 import numpy as np
 import torch
 import wandb
-from MammoNet.global_variables import WANDB_PROJECT
-
+from MammoNet.utils.global_variables import WANDB_PROJECT
 
 def get_cancer_type_from_path(path):
     return path.split(os.sep)[-4]
@@ -51,3 +50,5 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    
+    
