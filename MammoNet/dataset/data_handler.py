@@ -7,8 +7,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
 from MammoNet.dataset.dataset import HistologyDataset
-from MammoNet.global_variables import CLASSES, PATH_TO_DATASET, AUGMENTATION_DIR
-from MammoNet.utils import get_cancer_type_from_path, get_resolutions_from_path, get_label_from_augmented_image_path
+from MammoNet.utils.global_variables import CLASSES, PATH_TO_DATASET, AUGMENTATION_DIR
+from MammoNet.utils.utils import get_cancer_type_from_path, get_resolutions_from_path, get_label_from_augmented_image_path
 from MammoNet.dataset.image_augmentations import ImageAugmentations
 
 class DataHandler:
