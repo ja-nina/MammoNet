@@ -5,8 +5,7 @@ setup(
     version="0.1.0",
     description="Deep Learning for Breast Histology Classification",
     author="Nina Zukowska, Silvia Cambiago, Enise Irem Colak",
-    author_email="your.email@example.com",
-    url="https://github.com/yourusername/mammonet",  # TODO: replace with link to github
+    url="https://github.com/ja-nina/MammoNet/",
     packages=find_packages(),
     install_requires=[
         "torch",
