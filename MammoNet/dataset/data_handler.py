@@ -163,16 +163,14 @@ class DataHandler:
         train_files, val_files, test_files, train_labels, val_labels, test_labels = self.create_stratified_datasets(
             file_paths, labels, sublabels, resolutions, random_seed=random_seed
         )
-        datasets = self.create_datasets_with_augmentation(
-            train_files, val_files, test_files, train_labels, val_labels, test_labels, augment=augment
-        )
-        train_loader, val_loader, test_loader = self.create_data_loaders(
-            datasets["train"], datasets["valid"], datasets["test"]
-        )
+        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels,
+                                                          test_labels)
+        train_loader, val_loader, test_loader = self.create_data_loaders(datasets["train"], datasets["valid"],
+                                                                         datasets["test"])
 
         return train_loader, val_loader, test_loader
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     data_handler = DataHandler(augment=True, reuse_augmentation=False)
     train_loader, val_loader, test_loader = data_handler.get_dataset_loaders(augment=False)
