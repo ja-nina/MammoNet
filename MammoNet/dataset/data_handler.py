@@ -152,7 +152,7 @@ class DataHandler:
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
         return train_loader, val_loader, test_loader
 
-    def get_dataset_loaders(self, random_seed=42, augment=True):
+    def get_dataset_loaders(self, random_seed=42, augment=None):
         """
         Get dataset loaders for training, validation, and testing datasets.
         """
