@@ -1,7 +1,5 @@
 import torch.nn as nn
-from MammoNet.utils.utils import create_results_dir, setup_wandb, set_seed
-from MammoNet.global_variables import RESULTS_DIR, SEED
-from BaseModel import BaseModel
+from MammoNet.models.BaseModel import BaseModel
 
 
 class SimpleNNModel(nn.Module):
