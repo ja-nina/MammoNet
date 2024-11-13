@@ -1,5 +1,6 @@
 from MammoNet.dataset.data_handler import DataHandler
 from MammoNet.models.SimpleCNN import SimpleCNN
+from MammoNet.models.SimpleNN import SimpleNN
 from MammoNet.models.ViT import VisionTransformer
 
 if __name__ == "__main__":
@@ -21,6 +22,16 @@ if __name__ == "__main__":
     # SimpleCNN model training on data with augmentation
     print("\nStarting training for SimpleCNN (With Augmentation)...")
     simple_cnn_with_aug = SimpleCNN(num_classes=2)
+    simple_cnn_with_aug.train(train_loader_with_aug, val_loader_with_aug, test_loader_with_aug)
+
+    # SimpleNN model training on data without augmentation
+    print("\nStarting training for SimpleCNN (No Augmentation)...")
+    simple_cnn_no_aug = SimpleNN(num_classes=2)
+    simple_cnn_no_aug.train(train_loader_no_aug, val_loader_no_aug, test_loader_no_aug)
+
+    # SimpleNN model training on data with augmentation
+    print("\nStarting training for SimpleCNN (With Augmentation)...")
+    simple_cnn_with_aug = SimpleNN(num_classes=2)
     simple_cnn_with_aug.train(train_loader_with_aug, val_loader_with_aug, test_loader_with_aug)
 
     # VisionTransformer model training on data without augmentation
