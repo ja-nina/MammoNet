@@ -53,9 +53,11 @@ class BaseModel:
         accuracy = correct / len(val_loader.dataset)
         return running_loss / len(val_loader), accuracy
 
-    def train(self, train_loader, val_loader, test_loader):
+    def train(self, train_loader, val_loader, test_loader, augment=False):
         # init wandb
         setup_wandb("mammonet_project", {"model": self.model_name, "epochs": self.epochs})
+
+        augment_status = "with_aug" if augment else "no_aug"
 
         best_val_loss = float("inf")
         for epoch in range(self.epochs):
@@ -84,6 +86,7 @@ class BaseModel:
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
+                model_filename = f"{self.model.name}_{augment_status}.pth"
                 torch.save(self.model.state_dict(), os.path.join(self.results_dir, f"{self.model.name}.pth"))
         wandb.finish()
 
