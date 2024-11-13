@@ -8,11 +8,8 @@ from torchvision import transforms
 from sklearn.model_selection import train_test_split
 from MammoNet.dataset.dataset import HistologyDataset
 from MammoNet.utils.global_variables import CLASSES, PATH_TO_DATASET, AUGMENTATION_DIR
-from MammoNet.utils.utils import (
-    get_cancer_type_from_path,
-    get_resolutions_from_path,
-    get_label_from_augmented_image_path,
-)
+from MammoNet.utils.utils import get_cancer_type_from_path, get_resolutions_from_path, \
+    get_label_from_augmented_image_path
 from MammoNet.dataset.image_augmentations import ImageAugmentations
 
 
@@ -29,13 +26,11 @@ class DataHandler:
         """
         Initialize the DataHandler with the dataset path and classes.
         Reuse augmentation only if random seed is not changed.
-        # TODO: Config for data handler.
         """
-
         self.classes = classes
         self.data_path = data_path
 
-        # configure augmentation
+        # Configure augmentation
         self.augment = augment
         self.reuse_augmentation = reuse_augmentation
         self.augmentation_dir = AUGMENTATION_DIR
@@ -94,18 +89,16 @@ class DataHandler:
         augmented_labels = []
 
         if self.augment:
-            if self.reuse_augmentation is False:
-                for idx, (label, input_image_path) in tqdm(
-                    enumerate(zip(input_labels, input_images_paths)), total=len(input_labels), desc="Augmenting images"
-                ):
+            if not self.reuse_augmentation:
+                for idx, (label, input_image_path) in tqdm(enumerate(zip(input_labels, input_images_paths)),
+                                                           total=len(input_labels), desc="Augmenting images"):
                     img = Image.open(input_image_path)
                     img_array = np.array(img)
 
                     augmenter = ImageAugmentations()
 
                     for _ in range(num_copies):
-                        augmented_image = augmenter(img_array)  # Apply augmentations
-                        augmented_img_pil = augmented_image
+                        augmented_img_pil = augmenter(img_array) 
 
                         output_path = os.path.join(self.augmentation_dir, f"augmented_{idx}_{label}.png")
 
@@ -114,38 +107,37 @@ class DataHandler:
                         augmented_images.append(output_path)
                         augmented_labels.append(label)
             else:
-                augmented_images = [
-                    os.path.join(self.augmentation_dir, file)
-                    for file in os.listdir(self.augmentation_dir)
-                    if file.endswith(".png")
-                ]
-                augmented_labels = [get_label_from_augmented_image_path(file) for file in augmented_images]
+                augmented_images = [os.path.join(self.augmentation_dir, file)
+                                    for file in os.listdir(self.augmentation_dir)
+                                    if file.endswith('.png')]
+                augmented_labels = [get_label_from_augmented_image_path(file)
+                                    for file in augmented_images]
 
         return augmented_images, augmented_labels
 
-    def create_datasets_with_augmentation(
-        self, train_files, val_files, test_files, train_labels, val_labels, test_labels, augment=True
-    ):
+    def create_datasets_with_augmentation(self, train_files, val_files, test_files, train_labels, val_labels,
+                                          test_labels):
         """
         Create datasets with augmentation for training, validation, and testing.
         """
-
         augmented_files, augmented_labels = self.generate_augmented_images(train_files, train_labels)
         train_files = train_files + augmented_files
         train_labels = tuple(list(train_labels) + augmented_labels)
 
-        transform = transforms.Compose(
-            [
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-            ]
-        )
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+        ])
 
         train_dataset = HistologyDataset(train_files, train_labels, transform=transform)
         val_dataset = HistologyDataset(val_files, val_labels, transform=transform)
         test_dataset = HistologyDataset(test_files, test_labels, transform=transform)
 
-        return DatasetDict({"train": train_dataset, "test": test_dataset, "valid": val_dataset})
+        return DatasetDict({
+            'train': train_dataset,
+            'test': test_dataset,
+            'valid': val_dataset
+        })
 
     def create_data_loaders(self, train_dataset, val_dataset, test_dataset):
         """
@@ -160,6 +152,9 @@ class DataHandler:
         """
         Get dataset loaders for training, validation, and testing datasets.
         """
+        if augment is not None:
+            self.augment = augment
+
         file_paths, labels, sublabels, resolutions = self.read_full_dataset()
         train_files, val_files, test_files, train_labels, val_labels, test_labels = self.create_stratified_datasets(
             file_paths, labels, sublabels, resolutions, random_seed=random_seed
@@ -172,8 +167,15 @@ class DataHandler:
         )
 
         return train_loader, val_loader, test_loader
+        datasets = self.create_datasets_with_augmentation(train_files, val_files, test_files, train_labels, val_labels,
+                                                          test_labels)
+        train_loader, val_loader, test_loader = self.create_data_loaders(datasets['train'], datasets['valid'],
+                                                                         datasets['test'])
+
+        return train_loader, val_loader, test_loader
+
 
 
 if __name__ == "__main__":
     data_handler = DataHandler(augment=True, reuse_augmentation=False)
-    data_handler.get_dataset_loaders()
+    train_loader, val_loader, test_loader = data_handler.get_dataset_loaders(augment=False)
