@@ -3,6 +3,8 @@ from PIL import Image
 
 
 from MammoNet.utils.global_variables import CLASSES
+
+
 class HistologyDataset(Dataset):
     def __init__(self, file_paths, labels, transform=None):
         self.file_paths = file_paths
@@ -15,7 +17,7 @@ class HistologyDataset(Dataset):
 
     def __getitem__(self, idx):
         img_path = self.file_paths[idx]
-        image = Image.open(img_path).convert('RGB')
+        image = Image.open(img_path).convert("RGB")
         label = self.labels[idx]
         label_idx = self.label_to_idx[label]
 
@@ -23,5 +25,3 @@ class HistologyDataset(Dataset):
             image = self.transform(image)
 
         return image, label_idx
-    
-    
