@@ -24,6 +24,6 @@ class SimpleNNModel(nn.Module):
 
 
 class SimpleNN(BaseModel):
-    def __init__(self, num_classes=2, input_size=224):
+    def __init__(self, num_classes=2, input_size=224, **kwargs):
         model = SimpleNNModel(num_classes, input_size)
-        super().__init__(model=model, num_classes=num_classes, model_name="SimpleNNModel")
+        super().__init__(model=model, num_classes=num_classes, model_name="SimpleNNModel", **kwargs)

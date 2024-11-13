@@ -24,6 +24,12 @@ class SimplerNNModel(nn.Module):
 
 
 class SimplerNN(BaseModel):
-    def __init__(self, num_classes=2, input_size=224, lr=0.001, epochs=10):
+    def __init__(self, num_classes=2, input_size=224, **kwargs):
         model = SimplerNNModel(num_classes, input_size)
-        super().__init__(model=model, num_classes=num_classes, model_name="SimplerNNModel", lr=lr, epochs=epochs)
+        
+        super().__init__(
+            model=model,
+            num_classes=num_classes,
+            model_name="SimplerNNModel",
+            **kwargs
+        )

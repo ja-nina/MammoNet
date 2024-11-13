@@ -152,19 +152,17 @@ class DataHandler:
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
         return train_loader, val_loader, test_loader
 
-    def get_dataset_loaders(self, random_seed=42, augment=True):
+    def get_dataset_loaders(self, random_seed=42):
         """
         Get dataset loaders for training, validation, and testing datasets.
         """
-        if augment is not None:
-            self.augment = augment
-
+        
         file_paths, labels, sublabels, resolutions = self.read_full_dataset()
         train_files, val_files, test_files, train_labels, val_labels, test_labels = self.create_stratified_datasets(
             file_paths, labels, sublabels, resolutions, random_seed=random_seed
         )
         datasets = self.create_datasets_with_augmentation(
-            train_files, val_files, test_files, train_labels, val_labels, test_labels, augment=augment
+            train_files, val_files, test_files, train_labels, val_labels, test_labels
         )
         train_loader, val_loader, test_loader = self.create_data_loaders(
             datasets["train"], datasets["valid"], datasets["test"]

@@ -30,6 +30,6 @@ class VisionTransformer(BaseModel):
     Vision Transformer model class wrapper.
     """
 
-    def __init__(self, num_classes=2):
+    def __init__(self, num_classes=2, **kwargs):
         model = VisionTransformerModel(num_classes)
-        super().__init__(model, num_classes, "ViT", lr=0.0001, epochs=10)
+        super().__init__(model, num_classes, "ViT", lr=0.0005, epochs=10, **kwargs)
