@@ -1,12 +1,18 @@
 from typing import List
 from pathlib import Path
-from pydantic import BaseModel, ConfigDict, PlainSerializer
+from pydantic import BaseModel, ConfigDict, PlainSerializer, BeforeValidator
 from typing_extensions import Annotated
 import numpy as np
 
 
+def cast_to_ndarray(value):
+    if isinstance(value, list):
+        return np.array(value)
+    return value
+
 NdArray = Annotated[
     np.ndarray,
+    BeforeValidator(cast_to_ndarray),
     PlainSerializer(lambda x: x.tolist(), return_type=list),
 ]
 
