@@ -44,6 +44,6 @@ class SimpleCNN(BaseModel):
     SimpleCNN model class wrapper
     """
 
-    def __init__(self, num_classes=2, input_size=224):
+    def __init__(self, num_classes=2, input_size=224, **kwargs):
         model = SimpleCNNModel(num_classes, input_size)
-        super().__init__(model, num_classes, "SimpleCNN", lr=0.001, epochs=10)
+        super().__init__(model, num_classes, "SimpleCNN", lr=0.001, epochs=10, **kwargs)

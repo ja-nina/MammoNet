@@ -9,7 +9,7 @@ from MammoNet.utils.utils import create_results_dir, setup_wandb, set_seed
 
 
 class BaseModel:
-    def __init__(self, model, num_classes, model_name, lr=0.001, epochs=10):
+    def __init__(self, model, num_classes, model_name, lr=0.001, epochs=10, suffix = None):
         self.model_name = model_name
         self.model = model
         self.num_classes = num_classes
@@ -19,6 +19,7 @@ class BaseModel:
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.results_dir = RESULTS_DIR
+        self.save_model_file= f"{self.model.name}_{suffix}.pth" if suffix is not None else f"{self.model.name}.pth"
 
         create_results_dir(self.results_dir)
         set_seed(SEED)
@@ -84,7 +85,7 @@ class BaseModel:
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                torch.save(self.model.state_dict(), os.path.join(self.results_dir, f"{self.model.name}.pth"))
+                torch.save(self.model.state_dict(), os.path.join(self.results_dir, self.save_model_file))
         wandb.finish()
 
     def load_model(self, model_path, device):
