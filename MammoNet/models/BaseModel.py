@@ -87,7 +87,7 @@ class BaseModel:
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 model_filename = f"{self.model.name}_{augment_status}.pth"
-                torch.save(self.model.state_dict(), os.path.join(self.results_dir, f"{self.model.name}.pth"))
+                torch.save(self.model.state_dict(), os.path.join(self.results_dir, model_filename))
         wandb.finish()
 
     def load_model(self, model_path, device):
