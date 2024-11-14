@@ -2,7 +2,10 @@ import os
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
+import random
+from collections import Counter
 from datasets import DatasetDict
+from typing import List, Tuple
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
@@ -25,6 +28,7 @@ class DataHandler:
         reuse_augmentation=True,
         num_workers=4,
         batch_size=32,
+        under_over_sample=False
     ):
         """
         Initialize the DataHandler with the dataset path and classes.
@@ -40,7 +44,7 @@ class DataHandler:
         self.num_copies = 1
         self.num_workers = num_workers
         self.batch_size = batch_size
-
+        self.under_over_sample = under_over_sample
         os.makedirs(self.augmentation_dir, exist_ok=True)
 
     def read_full_dataset(self):
@@ -120,6 +124,29 @@ class DataHandler:
 
         return augmented_images, augmented_labels
 
+    def sample_images(self, input_labels: List[str], input_images_paths: List[str]) -> Tuple[List[str], List[str]]:
+
+        total_samples = len(input_labels)
+        label_counts = Counter(input_labels)
+        adjusted_distribution = {
+            label: dist + (0.05 if dist <= 0.5 else -0.05)
+            for label, dist in ((label, count / total_samples) for label, count in label_counts.items())
+        }
+        samples_per_class = {label: int(adjusted_distribution[label] * total_samples) for label in label_counts}
+
+        label_to_images = {label: [] for label in label_counts}
+        for label, path in zip(input_labels, input_images_paths):
+            label_to_images[label].append(path)
+
+        sampled_labels, sampled_images_paths = [], []
+        for label, image_paths in label_to_images.items():
+            num_samples = samples_per_class[label]
+            sampled_paths = random.sample(image_paths, num_samples) if num_samples <= len(image_paths) else random.choices(image_paths, k=num_samples)
+            sampled_labels.extend([label] * len(sampled_paths))
+            sampled_images_paths.extend(sampled_paths)
+
+        return sampled_labels, sampled_images_paths
+    
     def create_datasets_with_augmentation(
         self, train_files, val_files, test_files, train_labels, val_labels, test_labels
     ):
@@ -127,9 +154,15 @@ class DataHandler:
         Create datasets with augmentation for training, validation, and testing.
         """
         augmented_files, augmented_labels = self.generate_augmented_images(train_files, train_labels)
+        # sample
+        
+        
         train_files = train_files + augmented_files
         train_labels = tuple(list(train_labels) + augmented_labels)
 
+        if self.under_over_sample:
+            train_labels, train_files = self.sample_images(train_labels, train_files)
+        
         transform = transforms.Compose(
             [
                 transforms.Resize((224, 224)),

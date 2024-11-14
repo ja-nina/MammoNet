@@ -1,10 +1,11 @@
 import torch
+import logging
 from tqdm import tqdm
 from sklearn import metrics
 from pathlib import Path
 from MammoNet.models.BaseModel import BaseModel
 from MammoNet.utils.result_structs import ImageResult, ResultsConfig, Metrics
-
+from MammoNet.models import VisionTransformer, SimpleCNN, SimpleNN
 
 class Evaluator:
     def __init__(self, data_loader_val, data_loader_test):
@@ -50,7 +51,7 @@ class Evaluator:
         computed_metrics = Metrics(**{name: func(y_true, y_pred) for name, func in self.metric_functions.items()})
         return computed_metrics
 
-    def evaluate_model(self, model_class: object, model_path: Path):
+    def evaluate_model(self, model_class: BaseModel, model_path: Path):
         """
         Load, predict and evaluate the model.
         """
@@ -74,6 +75,7 @@ class Evaluator:
         """
         Load the model from the given path.
         """
+        logging.info(f"Loading model {model_class} from path: %s", model_path)
         model = model_class()
         model.load_model(model_path, self.device)
         return model
